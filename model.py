@@ -46,7 +46,7 @@ def create_generator(generator_inputs, generator_outputs_channels, style_id, emb
         style_embedded = external_emb
     style_embedded = tf.reshape(style_embedded, [-1, 1, 1, a.emb_dim])
 
-    if not style_id2 is None:
+    if style_id2 is not None:
         style_embedded_2 = tf.nn.embedding_lookup(style_embedding_table, style_id2)
         style_embedded_2 = tf.reshape(style_embedded_2, [-1, 1, 1, a.emb_dim])
 
@@ -139,7 +139,7 @@ def create_encoder(generator_inputs, discrim_targets, a):
 
     layers.append(image_compressed)
 
-    for dense_layer, out_chal in enumerate(layer_specs):
+    for out_chal in layer_specs:
         output = tf.layers.dense(inputs=layers[-1], units=out_chal, activation=None)
         output = lrelu(output, 0.2)
         layers.append(output)

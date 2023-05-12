@@ -64,7 +64,7 @@ def spectral_norm(w, iteration=1):
 
     u_hat = u
     v_hat = None
-    for i in range(iteration):
+    for _ in range(iteration):
         # Power iteration: Usually iteration = 1 will be enough
         v_ = tf.matmul(u_hat, tf.transpose(w))
         v_hat = tf.nn.l2_normalize(v_)

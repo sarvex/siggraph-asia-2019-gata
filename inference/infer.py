@@ -61,9 +61,18 @@ def inference_model(a, external_emb=None):
                                   mix_weight=True)
 
     # Inputs and targets are [batch_size, height, width, channels].
-    model = create_model(examples.inputs, examples.targets, test_examples.inputs, test_examples.targets,
-                         examples.labels, test_examples.labels, a, examples.labels2, examples.weight,
-                         external_emb=(not external_emb is None))
+    model = create_model(
+        examples.inputs,
+        examples.targets,
+        test_examples.inputs,
+        test_examples.targets,
+        examples.labels,
+        test_examples.labels,
+        a,
+        examples.labels2,
+        examples.weight,
+        external_emb=external_emb is not None,
+    )
 
     # Undo colorization splitting on images that we use for display/output.
     if a.lab_colorization:

@@ -45,8 +45,7 @@ def build_patch(patch_size):
             x = (i - radius) / radius
             y = (j - radius) / radius
             val = 1 - offset * (x * x + y * y)
-            if val < 0:
-                val = 0
+            val = max(val, 0)
             patch[i, j] = val * val
     return patch
 
@@ -84,7 +83,7 @@ def build_dictionary(terrain, patch_size, offset, n_rotations, terrain_l, inx, o
             range_max.append(max(np.amax(cur_patch), -np.amin(cur_patch)))
 
     range_max.sort()
-    current_r = range_max[-int(len(range_max) / 6)]
+    current_r = range_max[-(len(range_max) // 6)]
     print(current_r)
 
     print("Building terrain.")
@@ -128,12 +127,14 @@ def build_dictionary(terrain, patch_size, offset, n_rotations, terrain_l, inx, o
                 figure = figure.astype('uint16')
                 if random.uniform(0, 1) < TEST_RATIO:
                     cv2.imwrite(
-                        output_dir + 'validate/' + str(i) + '_' + str(j) + '_' + str(k) + '_style_' + str(inx) + '.png',
-                        figure)
+                        f'{output_dir}validate/{str(i)}_{str(j)}_{str(k)}_style_{str(inx)}.png',
+                        figure,
+                    )
                 else:
                     cv2.imwrite(
-                        output_dir + 'train/' + str(i) + '_' + str(j) + '_' + str(k) + '_style_' + str(inx) + '.png',
-                        figure)
+                        f'{output_dir}train/{str(i)}_{str(j)}_{str(k)}_style_{str(inx)}.png',
+                        figure,
+                    )
             row_idx += 1
 
     return row_idx
@@ -144,10 +145,10 @@ def main():
     if os.path.isdir(output_dir):
         raise Exception("Cannot overwrite the output folder.")
     os.makedirs(output_dir)
-    os.makedirs(output_dir + 'train/')
-    os.makedirs(output_dir + 'validate/')
+    os.makedirs(f'{output_dir}train/')
+    os.makedirs(f'{output_dir}validate/')
 
-    if not OUTPUT_LIST is None:
+    if OUTPUT_LIST is not None:
         style_list_file = open(OUTPUT_LIST, "w+")
 
     for (dirpath, dirnames, filenames) in walk('./dataset/style_dataset/'):
@@ -155,8 +156,8 @@ def main():
         for file in filenames:
             if file[-4:] != '.png':
                 continue
-            if not OUTPUT_LIST is None:
-                file_name = file[:-4] + '.png'
+            if OUTPUT_LIST is not None:
+                file_name = f'{file[:-4]}.png'
                 style_list_file.write('\'' + file_name + '\': \'' + str(inx) + '\',\n')
             path = os.path.join(dirpath, file)
             terrain_a = read_height_field(path)
@@ -176,7 +177,7 @@ def main():
             print(row_idx)
             inx += 1
 
-    if not OUTPUT_LIST is None:
+    if OUTPUT_LIST is not None:
         style_list_file.close()
 
 

@@ -16,7 +16,6 @@ def build_patch(patch_size):
             x = (i - radius) / radius
             y = (j - radius) / radius
             val = 1 - offset * (x * x + y * y)
-            if val < 0:
-                val = 0
+            val = max(val, 0)
             patch[i, j] = val * val
     return patch

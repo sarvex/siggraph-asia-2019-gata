@@ -80,9 +80,9 @@ def terrain_amplification_big(height_field, factor, isUint16=True, style_list=(1
     """
     patch_size = 64
 
-    if not style_list is None:
+    if style_list is not None:
         style_id_nn, style_id_nn2 = style_list
-    elif not external_emb is None:
+    elif external_emb is not None:
         style_id_nn, style_id_nn2 = 0, 0
 
     h_lr, w_lr = height_field.shape[0], height_field.shape[1]
@@ -113,15 +113,11 @@ def terrain_amplification_big(height_field, factor, isUint16=True, style_list=(1
     print("height_field.shape", height_field.shape)
     height_field = terrain_dilate(height_field, patch_size_hr)
 
-    if smooth_input:
-        T = butter2d(height_field, 0.008, 3)
-    else:
-        T = height_field
-
+    T = butter2d(height_field, 0.008, 3) if smooth_input else height_field
     h_T, w_T = T.shape
     d1 = math.floor((h_T - patch_size) / offset_high_hr)
     d2 = math.floor((w_T - patch_size) / offset_high_hr)
-    dir_path = os.path.dirname(os.path.realpath(__file__)) + '/temp/'
+    dir_path = f'{os.path.dirname(os.path.realpath(__file__))}/temp/'
 
     def rm_file(folder):
         for the_file in os.listdir(folder):
@@ -133,12 +129,12 @@ def terrain_amplification_big(height_field, factor, isUint16=True, style_list=(1
                 print(e)
 
     if os.path.isdir(dir_path):
-        rm_file(dir_path + 'input')
-        rm_file(dir_path + 'ref')
+        rm_file(f'{dir_path}input')
+        rm_file(f'{dir_path}ref')
     else:
         os.mkdir(dir_path)
-        os.mkdir(dir_path + 'input')
-        os.mkdir(dir_path + 'ref')
+        os.mkdir(f'{dir_path}input')
+        os.mkdir(f'{dir_path}ref')
 
     style_dic = {}
     weight_dic = {}
@@ -150,35 +146,42 @@ def terrain_amplification_big(height_field, factor, isUint16=True, style_list=(1
             else:
                 style_dic[(i, j)], weight_dic[(i, j)] = ([style_id_nn, style_id_nn2], fix_ratio)
 
-    X, means_lr, current_r = build_dictionary_big(T, patch_mask_hr, offset_high_hr, d1, d2, 1,
-                                                  save_dic=dir_path + 'input/', style_dic=style_dic,
-                                                  weight_dic=weight_dic)
+    X, means_lr, current_r = build_dictionary_big(
+        T,
+        patch_mask_hr,
+        offset_high_hr,
+        d1,
+        d2,
+        1,
+        save_dic=f'{dir_path}input/',
+        style_dic=style_dic,
+        weight_dic=weight_dic,
+    )
 
-    a.output_dir = dir_path + 'result'
-    a.input_dir = dir_path + 'input'
-    a.test_dir = dir_path + 'input'
-    a.ref_dir = dir_path + 'ref'
+    a.output_dir = f'{dir_path}result'
+    a.input_dir = f'{dir_path}input'
+    a.test_dir = f'{dir_path}input'
+    a.ref_dir = f'{dir_path}ref'
     a.mode = "test"
     a.png16bits = True
-    a.checkpoint = os.path.dirname(os.path.realpath(__file__)) + '/checkpoint'
+    a.checkpoint = f'{os.path.dirname(os.path.realpath(__file__))}/checkpoint'
 
     if external_emb is None:
         inference_model(a)
     else:
         import shutil
-        shutil.copy2(external_emb, dir_path + 'ref/style.png')
+        shutil.copy2(external_emb, f'{dir_path}ref/style.png')
         emb = inference_emb(a)
         inference_model(a, emb)
 
-    dir_path = os.path.dirname(os.path.realpath(__file__)) + '/temp/'
+    dir_path = f'{os.path.dirname(os.path.realpath(__file__))}/temp/'
 
     result = np.zeros((h_lr + 2 * patch_size_hr, w_lr + 2 * patch_size_hr))
     for i in range(0, d1):
         for j in range(0, d2):
             style_id, style_id2 = style_dic[(i, j)]
             weight = weight_dic[(i, j)]
-            dir_Y = dir_path + 'result/images/' + str(i) + '_' + str(j) + '_style_' + str(weight) + '_' + str(
-                style_id2) + '_' + str(style_id) + '-outputs.png'
+            dir_Y = f'{dir_path}result/images/{str(i)}_{str(j)}_style_{str(weight)}_{str(style_id2)}_{str(style_id)}-outputs.png'
             image = cv2.imread(dir_Y, -1)
             image = np.double(image[:, :, 0])
             print(dir_Y, np.max(image), np.mean(image), np.min(image))
@@ -247,24 +250,26 @@ def generate_sample(input_filename, style_list, bound_w, resize, extra_label='',
 
     hf = read_height_field(input_filename)
     name = input_filename.split('.')[-2][input_filename.rindex('/')+1:]
-    if not bound_w is None:
+    if bound_w is not None:
         bound_w = int(bound_w * resize)
     hf = cv2.resize(hf, (int(resize * hf.shape[1]), int(resize * hf.shape[0])))
     amplified_hf, T = terrain_amplification_big(hf, 4, isUint16=True, style_list=style_list,
                                                 bound_w=bound_w, fix_ratio=fix_ratio,
                                                 external_emb=external_emb, smooth_input=smooth_input)
-    if not style_list is None:
+    if style_list is not None:
         try:
             style1, style2 = style_list
         except:
             style1 = style_list
             style2 = style_list
-        style_label = str(style1) + '_' + str(style2)
+        style_label = f'{str(style1)}_{str(style2)}'
     else:
         style_label = external_emb.split('/')[-1]
-    cv2.imwrite('./inference/inference_sample/' + name + '_output_' + style_label + '_' + str(bound_w) + '_' + str(
-        resize) + extra_label + '.png', amplified_hf)
-    cv2.imwrite('./inference/inference_sample/' + name + '_input' + '_' + str(resize) + '.png', T)
+    cv2.imwrite(
+        f'./inference/inference_sample/{name}_output_{style_label}_{str(bound_w)}_{str(resize)}{extra_label}.png',
+        amplified_hf,
+    )
+    cv2.imwrite(f'./inference/inference_sample/{name}_input_{str(resize)}.png', T)
 
 
 if __name__ == '__main__':

@@ -30,11 +30,11 @@ def load_examples(input_dir, mode, lab_colorization,
 
     input_paths = glob.glob(os.path.join(input_dir, "*.jpg"))
     decode = tf.image.decode_jpeg
-    if len(input_paths) == 0:
+    if not input_paths:
         input_paths = glob.glob(os.path.join(input_dir, "*.png"))
         decode = tf.image.decode_png
 
-    if len(input_paths) == 0:
+    if not input_paths:
         raise Exception("input_dir contains no image files")
 
     def get_name(path):

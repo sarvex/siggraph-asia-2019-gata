@@ -21,12 +21,10 @@ def read_images_from_disk(input_queue, combine_weight=False):
     """
     label = input_queue[1]
     file_contents = tf.read_file(input_queue[0])
-    if combine_weight:
-        label2 = input_queue[2]
-        weight = input_queue[3]
-        return input_queue[0], file_contents, label, label2, weight
-    else:
+    if not combine_weight:
         return input_queue[0], file_contents, label
+    label2 = input_queue[2]
+    return input_queue[0], file_contents, label, label2, input_queue[3]
 
 
 def preprocess(image):
@@ -61,8 +59,7 @@ def augment(image, brightness):
     a_chan, b_chan = tf.unstack(image, axis=3)
     L_chan = tf.squeeze(brightness, axis=3)
     lab = deprocess_lab(L_chan, a_chan, b_chan)
-    rgb = lab_to_rgb(lab)
-    return rgb
+    return lab_to_rgb(lab)
 
 
 def check_image(image):
@@ -179,7 +176,7 @@ def save_images(fetches, step=None, output_dir=None):
         name, _ = os.path.splitext(os.path.basename(in_path.decode("utf8")))
         fileset = {"name": name, "step": step}
         for kind in ["inputs", "outputs", "targets"]:
-            filename = name + "-" + kind + ".png"
+            filename = f"{name}-{kind}.png"
             if step is not None:
                 filename = "%08d-%s" % (step, filename)
             fileset[kind] = filename
@@ -207,10 +204,10 @@ def append_index(filesets, step=False, output_dir=None):
 
         if step:
             index.write("<td>%d</td>" % fileset["step"])
-        index.write("<td>%s</td>" % fileset["name"])
+        index.write(f'<td>{fileset["name"]}</td>')
 
         for kind in ["inputs", "outputs", "targets"]:
-            index.write("<td><img src='images/%s'></td>" % fileset[kind])
+            index.write(f"<td><img src='images/{fileset[kind]}'></td>")
 
         index.write("</tr>")
     return index_path

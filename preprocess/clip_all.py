@@ -86,10 +86,10 @@ def process_image(image_path, img_name, ratio, clip, proc):
 
     step_1 = 1024
     step_2 = 1024
-    if (l1 / 1024) > 6:
+    if l1 > 6144:
         step_1 = int(l1 / 6)
         print('large image')
-    if (l2 / 1024) > 6:
+    if l2 > 6144:
         step_2 = int(l2 / 6)
         print('large image')
 
@@ -133,12 +133,12 @@ def main():
             path = os.path.join(dirpath, file)
             print(path)
             ratio = 1
-            if file[:-4] in ratio_dic.keys():
+            if file[:-4] in ratio_dic:
                 print('ratio here:', file[:-4])
                 ratio = ratio_dic[file[:-4]]
             ratio *= overall
             clip = None
-            if file[:-4] in clip_dic.keys():
+            if file[:-4] in clip_dic:
                 print('clip here:', file[:-4])
                 clip = clip_dic[file[:-4]]
             process_image(path, file[:-4], ratio, clip, proc=proc)
